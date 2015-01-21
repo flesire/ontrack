@@ -114,3 +114,14 @@ task release(dependsOn: ['versionDisplay']) {
 task wrapper(type: Wrapper) {
     gradleVersion = '2.2.1'
 }
+
+/**
+* Sonar settings
+*/
+
+apply plugin: 'sonar-runner'
+apply plugin: 'jacoco'
+
+sonarRunner {
+   toolVersion = '2.4'
+}
