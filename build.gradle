@@ -119,9 +119,21 @@ task wrapper(type: Wrapper) {
 * Sonar settings
 */
 
-apply plugin: 'sonar-runner'
-apply plugin: 'jacoco'
+if (project.hasProperty('sonar')) {
 
-sonarRunner {
-   toolVersion = '2.4'
+   apply plugin: 'sonar-runner'
+
+   sonarRunner {
+      toolVersion = '2.4'
+   }
+
+   configure(javaProjects) {
+
+      apply plugin: 'jacoco'
+
+      jacoco {
+         toolVersion = '0.7.2.201409121644'
+      }
+   }
+
 }
