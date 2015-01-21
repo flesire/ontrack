@@ -46,7 +46,11 @@ bootRepackage {
 
 ext {
     ontrackUrl = 'http://localhost:8080'
-    ontrackJvmOptions = project.hasProperty('ontrackJvmOptions') ? project.ontrackJvmOptions : '-Xmx256m'
+    if (project.hasProperty('ontrackJvmOptions')) {
+        ontrackJvmOptionList = [project.properties['ontrackJvmOptions']]
+    } else {
+        ontrackJvmOptionList = ['-Xmx256m']
+    }
 }
 
 acceptanceTest {
@@ -105,7 +109,7 @@ task localAcceptanceTestStart << {
     ant.echo 'Starting application defined by ${app.file}'
     ant.echo "Starting application on port ${ontrackPort}"
     ant.echo 'Log files available at ${app.log}'
-    ant.echo "JVM options: ${ontrackJvmOptions}"
+    ant.echo "JVM options: ${ontrackJvmOptionList}"
 
     ant.java(
             jar: '${app.file}',
@@ -113,7 +117,9 @@ task localAcceptanceTestStart << {
             spawn: true,
             dir: '${app.dir}'
     ) {
-        jvmarg(value: "${ontrackJvmOptions}")
+        ontrackJvmOptionList.each {
+            jvmarg(value: it)
+        }
         arg(value: "--server.port=${ontrackPort}")
         arg(value: '--logging.path=${app.log}')
         arg(value: '--spring.profiles.active=acceptance')
@@ -142,3 +148,23 @@ task localAcceptanceTestEnd << {
 project.tasks.localAcceptanceTestStart.dependsOn ':ontrack-ui:assemble'
 project.tasks.localAcceptanceTest.dependsOn 'localAcceptanceTestStart'
 project.tasks.localAcceptanceTest.finalizedBy 'localAcceptanceTestEnd'
+
+// Jacoco set-up
+
+if (project.hasProperty('sonar')) {
+
+    task jacocoAgentExtract(type: Copy) {
+        from project.configurations.jacocoAgent.collect { project.zipTree(it) }
+        into "${buildDir}/jacoco"
+    }
+
+    task jacocoAgentSetup(dependsOn: jacocoAgentExtract) << {
+        project.ext.ontrackJvmOptionList += [
+            "-javaagent:${buildDir}/jacoco/jacocoagent.jar=destfile=${rootDir}/build/jacoco/acceptance-test.exec,append=true,includes=net/nemerosa/**"
+        ]
+        project.mkdir "${rootDir}/build/jacoco"
+    }
+
+    project.tasks.localAcceptanceTestStart.dependsOn 'jacocoAgentSetup'
+
+}
