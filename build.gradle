@@ -125,6 +125,10 @@ if (project.hasProperty('sonar')) {
 
    sonarRunner {
       toolVersion = '2.4'
+      sonarProperties {
+         property 'sonar.java.coveragePlugin', 'jacoco'
+      }
+
    }
 
    configure(javaProjects) {
@@ -133,6 +137,13 @@ if (project.hasProperty('sonar')) {
 
       jacoco {
          toolVersion = '0.7.2.201409121644'
+      }
+
+      integrationTest {
+         jacoco {
+            append = true
+            destinationFile = file("$buildDir/jacoco/test.exec")
+         }
       }
    }
 
